@@ -46,7 +46,9 @@ class ItemRepositoryTest {
         assertThat(result.size()).isEqualTo(2);
         assertThat(result).contains(item1, item2);
 
-    }@Test
+    }
+
+    @Test
     void updateItem() {
         // given
         Item item = new Item("item1", 10000, 10);
