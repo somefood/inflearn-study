@@ -24,7 +24,7 @@ public class ItemService {
         return itemRepository.findAll();
     }
 
-    public Item findIne(Long itemId) {
+    public Item findOne(Long itemId) {
         return itemRepository.findOne(itemId);
     }
 }
