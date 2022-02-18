@@ -19,17 +19,15 @@ public class JpaMain {
 
         try {
 
-//            Member findMember = em.find(Member.class, 1L);
-//            findMember.setName("HelloJPA");
+            // 비영속
+            Member member = new Member();
+            member.setId(100L);
+            member.setName("HelloJPA");
 
-            List<Member> findMembers = em.createQuery("select m from Member as m", Member.class)
-                    .setFirstResult(5)
-                    .setMaxResults(8)
-                    .getResultList();
-
-            for (Member findMember : findMembers) {
-                System.out.println("findMember = " + findMember.getName());
-            }
+            // 영속
+            System.out.println("===BEFORE===");
+            em.persist(member); // 이때 디비 저장되는건 아님
+            System.out.println("===AFTER===");
 
             tx.commit();
         } catch (Exception e) {
