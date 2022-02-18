@@ -20,14 +20,18 @@ public class JpaMain {
         try {
 
             // 비영속
-            Member member = new Member();
-            member.setId(100L);
-            member.setName("HelloJPA");
+//            Member member = new Member();
+//            member.setId(101L);
+//            member.setName("HelloJPA");
+//
+//            // 영속
+//            System.out.println("===BEFORE===");
+//            em.persist(member); // 이때 디비 저장되는건 아님, 1차 캐시에 저장
+//            System.out.println("===AFTER===");
 
-            // 영속
-            System.out.println("===BEFORE===");
-            em.persist(member); // 이때 디비 저장되는건 아님
-            System.out.println("===AFTER===");
+            Member member = em.find(Member.class, 150L);
+            member.setName("ZZZZZ");
+
 
             tx.commit();
         } catch (Exception e) {
