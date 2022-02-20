@@ -29,13 +29,13 @@ public class JpaMain {
 //            em.persist(member); // 이때 디비 저장되는건 아님, 1차 캐시에 저장
 //            System.out.println("===AFTER===");
 
-            Member member = em.find(Member.class, 150L);
-            member.setName("BBBBB");
-
-//            em.detach(member);
-            em.clear();
-
-            Member member2 = em.find(Member.class, 150L);
+//            Member member = em.find(Member.class, 150L);
+//            member.setName("BBBBB");
+//
+////            em.detach(member);
+//            em.clear();
+//
+//            Member member2 = em.find(Member.class, 150L);
 
 
 //            Member member = new Member(201L, "member200");
