@@ -4,31 +4,35 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
+//@SequenceGenerator(name = "member_seq_generator", sequenceName = "member_seq")
+//@TableGenerator(
+//        name = "MEMBER_SEQ_GENERATOR",
+//        table = "MY_SEQUENCES",
+//        pkColumnValue = "MEMBER_SEQ", allocationSize = 1)
 public class Member {
 
     @Id // pk
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_seq_generator")
+//    @GeneratedValue(strategy = GenerationType.TABLE, generator = "MEMBER_SEQ_GENERATOR")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "name")
     private String username;
-    private Integer age;
 
-    @Enumerated(EnumType.STRING)
-    private RoleType roleType;
+    public Long getId() {
+        return id;
+    }
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date lastModifiedDate;
+    public String getUsername() {
+        return username;
+    }
 
-    @Lob
-    private String description;
-
-    @Transient // 메모리에서만
-    private int temp;
-
-    // JPA는 기본 생성자 있어야함
-    public Member() {
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

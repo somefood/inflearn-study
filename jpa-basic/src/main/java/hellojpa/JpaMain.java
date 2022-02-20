@@ -20,9 +20,9 @@ public class JpaMain {
         try {
 
             // 비영속
-//            Member member = new Member();
-//            member.setId(101L);
-//            member.setName("HelloJPA");
+            Member member = new Member();
+//            member.setId("ID_A");
+            member.setUsername("HelloJPA");
 //
 //            // 영속
 //            System.out.println("===BEFORE===");
@@ -39,7 +39,7 @@ public class JpaMain {
 
 
 //            Member member = new Member(201L, "member200");
-//            em.persist(member);
+            em.persist(member);
 //
 //            em.flush();
 
