@@ -1,6 +1,7 @@
 package hellojpa;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -20,6 +21,12 @@ public class Member {
     @Column(name = "name")
     private String username;
 
+    @Embedded
+    private Period period;
+
+    @Embedded
+    private Address address;
+
     public Long getId() {
         return id;
     }
@@ -34,5 +41,21 @@ public class Member {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Period getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(Period period) {
+        this.period = period;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 }
