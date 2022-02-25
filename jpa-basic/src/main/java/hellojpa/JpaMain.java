@@ -19,31 +19,22 @@ public class JpaMain {
 
         try {
 
-            // 비영속
-            Member member = new Member();
-//            member.setId("ID_A");
-            member.setUsername("HelloJPA");
-//
-//            // 영속
-//            System.out.println("===BEFORE===");
-//            em.persist(member); // 이때 디비 저장되는건 아님, 1차 캐시에 저장
-//            System.out.println("===AFTER===");
+            Child child1 = new Child();
+            Child child2 = new Child();
 
-//            Member member = em.find(Member.class, 150L);
-//            member.setName("BBBBB");
-//
-////            em.detach(member);
-//            em.clear();
-//
-//            Member member2 = em.find(Member.class, 150L);
+            Parent parent = new Parent();
+            parent.addChild(child1);
+            parent.addChild(child2);
 
+            em.persist(parent);
 
-//            Member member = new Member(201L, "member200");
-            em.persist(member);
-//
-//            em.flush();
+            em.flush();
+            em.clear();
 
-            System.out.println("=================");
+            Parent findParent = em.find(Parent.class, parent.getId());
+//            findParent.getChildList().remove(0);
+            em.remove(findParent);
+
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
