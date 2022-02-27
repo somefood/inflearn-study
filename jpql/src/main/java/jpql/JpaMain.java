@@ -22,11 +22,15 @@ public class JpaMain {
 
             em.persist(member);
 
-            Member singleResult = em.createQuery("select m from Member as m where m.username = :username", Member.class)
-                    .setParameter("username", "member1")
-                    .getSingleResult();
+            em.flush();
+            em.clear();
 
-            System.out.println("singleResult = " + singleResult.getUsername());
+            List<MemberDTO> result = em.createQuery("select new jpql.MemberDTO(m.username, m.age) from Member as m", MemberDTO.class)
+                    .getResultList();
+
+            MemberDTO memberDTO = result.get(0);
+            System.out.println("memberDTO = " + memberDTO.getUsername());
+            System.out.println("memberDTO = " + memberDTO.getAge());
 
             tx.commit();
         } catch (Exception e) {
