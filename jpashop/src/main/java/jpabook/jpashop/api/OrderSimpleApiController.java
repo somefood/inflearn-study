@@ -58,6 +58,11 @@ public class OrderSimpleApiController {
         return result;
     }
 
+    @GetMapping("/api/v4/simple-orders")
+    public List<SimpleOrderDto> ordersV4() {
+        return orderRepository.findOrderDtos();
+    }
+
     @Data
     static class SimpleOrderDto {
         private  Long orderId;
