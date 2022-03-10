@@ -18,6 +18,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
@@ -27,6 +28,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private AuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
+    @Autowired
+    private AuthenticationFailureHandler customAuthenticationFailureHandler;
 
     @Autowired
     private FormWebAuthenticationDetailsSource formWebAuthenticationDetailsSource;
@@ -55,7 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .antMatchers("/", "/users", "user/login/**").permitAll() // 필터를 거침
+                .antMatchers("/", "/users", "user/login/**", "/login*").permitAll() // 필터를 거침
                 .antMatchers("/mypage").hasRole("USER")
                 .antMatchers("/messages").hasRole("MANAGER")
                 .antMatchers("/config").hasRole("ADMIN")
@@ -66,6 +70,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .loginProcessingUrl("/login_proc")
                 .authenticationDetailsSource(formWebAuthenticationDetailsSource)
                 .successHandler(customAuthenticationSuccessHandler)
+                .failureHandler(customAuthenticationFailureHandler)
                 .permitAll();
     }
 }
