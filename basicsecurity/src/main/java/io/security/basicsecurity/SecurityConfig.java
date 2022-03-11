@@ -8,10 +8,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 
@@ -47,6 +50,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                    }
 //                })
 //                .permitAll()
+        ;
+
+        // 스프링 시큐리티는 로그아웃 방식을 POST를 받음. GET으로도 설정 가능
+      http
+                .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login")
+                .addLogoutHandler(new LogoutHandler() {
+                    @Override
+                    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+                        HttpSession session = request.getSession();
+                        session.invalidate();
+                    }
+                })
+                .logoutSuccessHandler(new LogoutSuccessHandler() {
+                    @Override
+                    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+                        response.sendRedirect("/login");
+                    }
+                }) // 핸들러를 사용하면 더 다양한 로직 구현 가능
+                .deleteCookies("remember-me")
         ;
     }
 }
