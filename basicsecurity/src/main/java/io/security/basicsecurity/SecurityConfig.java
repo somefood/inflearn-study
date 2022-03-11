@@ -59,27 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // 스프링 시큐리티는 로그아웃 방식을 POST를 받음. GET으로도 설정 가능
         http
-                .logout()
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login")
-                .addLogoutHandler(new LogoutHandler() {
-                    @Override
-                    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-                        HttpSession session = request.getSession();
-                        session.invalidate();
-                    }
-                })
-                .logoutSuccessHandler(new LogoutSuccessHandler() {
-                    @Override
-                    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                        response.sendRedirect("/login");
-                    }
-                }) // 핸들러를 사용하면 더 다양한 로직 구현 가능
-                .deleteCookies("remember-me")
-                .and()
                 .rememberMe()
-                .rememberMeParameter("remember")
-                .tokenValiditySeconds(3600)
                 .userDetailsService(userDetailsService)
         ;
     }
