@@ -20,9 +20,9 @@ public class MyFilter1 implements Filter {
         log.info("필터1");
         if (req.getMethod().equals("POST")) {
             String headerAuth = req.getHeader("Authorization");
-            log.info("headerAuth={}", headerAuth);
 
             if (headerAuth.equals("hi")) {
+                log.info("headerAuth={}", headerAuth);
                 chain.doFilter(req, res);
             } else {
                 PrintWriter out = res.getWriter();

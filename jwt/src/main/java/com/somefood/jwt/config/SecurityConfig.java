@@ -3,6 +3,7 @@ package com.somefood.jwt.config;
 import com.somefood.jwt.config.jwt.JwtAuthenticationFilter;
 import com.somefood.jwt.filter.MyFilter1;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -20,13 +21,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.addFilterBefore(new MyFilter1(), SecurityContextPersistenceFilter.class);
-        http.csrf().disable();
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 X
-                .and()
-                .addFilter(corsFilter) // 이 필터를 거침
+        http
+                .addFilter(corsFilter)
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 X
+            .and()
                 .formLogin().disable() // /login 비활성화함
                 .httpBasic().disable()
+
                 .addFilter(new JwtAuthenticationFilter(authenticationManager())) // AuthenticationManger 넘겨줘야함
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**")
