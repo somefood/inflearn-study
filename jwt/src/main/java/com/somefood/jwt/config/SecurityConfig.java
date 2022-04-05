@@ -1,5 +1,6 @@
 package com.somefood.jwt.config;
 
+import com.somefood.jwt.config.jwt.JwtAuthenticationFilter;
 import com.somefood.jwt.filter.MyFilter1;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,8 +25,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 사용 X
                 .and()
                 .addFilter(corsFilter) // 이 필터를 거침
-                .formLogin().disable()
+                .formLogin().disable() // /login 비활성화함
                 .httpBasic().disable()
+                .addFilter(new JwtAuthenticationFilter(authenticationManager())) // AuthenticationManger 넘겨줘야함
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**")
                 .access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
@@ -34,5 +36,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1/admin/**")
                 .access("hasRole('ROLE_ADMIN')")
                 .anyRequest().permitAll();
+
     }
 }
