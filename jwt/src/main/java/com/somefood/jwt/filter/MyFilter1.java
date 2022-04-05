@@ -23,11 +23,12 @@ public class MyFilter1 implements Filter {
 
             if (headerAuth.equals("hi")) {
                 log.info("headerAuth={}", headerAuth);
-                chain.doFilter(req, res);
             } else {
                 PrintWriter out = res.getWriter();
                 out.println("인증 안됨");
+                return;
             }
         }
+        chain.doFilter(req, res);
     }
 }
