@@ -138,6 +138,6 @@ class MemberRepositoryTest {
         memberRepository.save(m1);
         memberRepository.save(m2);
 
-        memberRepository.findListByUsername("asdfdsaf")
+        memberRepository.findListByUsername("asdfdsaf");
     }
 }
