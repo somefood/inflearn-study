@@ -22,6 +22,7 @@ public class HelloController {
     @GetMapping("/hello-v2")
     public String helloV2(@RequestParam Integer data) {
         System.out.println("data = " + data);
+        System.out.println(data instanceof Integer);
         return "ok";
     }
 
