@@ -1,10 +1,8 @@
 package me.somefood.thejavatest;
 
+import me.somefood.thejavatest.domain.Study;
+import me.somefood.thejavatest.study.StudyStatus;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
