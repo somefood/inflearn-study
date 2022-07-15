@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // 클래스마다 인스턴스 생성, 하나로 공유
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class StudyTest {
 
 
@@ -31,6 +32,7 @@ class StudyTest {
      * 테스트케이스 매서드명은 snake_case 사용해서 좀 읽기 쉽게 함
      */
 
+    @Order(2)
     @Test
     @DisplayName("스터디 만들기 fast")
     @FastTest
@@ -55,6 +57,7 @@ class StudyTest {
         });
     }
 
+    @Order(1)
     @Test
     @DisplayName("스터디 만들기 slow")
     @SlowTest
