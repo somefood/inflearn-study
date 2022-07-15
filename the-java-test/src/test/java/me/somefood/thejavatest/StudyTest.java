@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS) // 클래스마다 인스턴스 생성, 하나로 공유
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class StudyTest {
 
@@ -37,7 +36,8 @@ class StudyTest {
     @DisplayName("스터디 만들기 fast")
     @FastTest
     void create_new_study() {
-
+        System.out.println(this);
+        System.out.println(value++);
 //        assumeTrue("LOCAL".equalsIgnoreCase(System.getenv("TEST_ENV")));
         Study study = new Study(20);
         assertAll(
@@ -65,6 +65,8 @@ class StudyTest {
         Study study = new Study();
         assertNotNull(study);
         System.out.println("hello1");
+        System.out.println(this);
+        System.out.println("create1 " + value++);
     }
 
     @DisplayName("스터디 만들기")
