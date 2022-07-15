@@ -1,59 +1,41 @@
 package me.somefood.thejavatest.domain;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import me.somefood.thejavatest.study.StudyStatus;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Getter @Setter @NoArgsConstructor
 public class Study {
 
+    @Id @GeneratedValue
+    private Long id;
     private StudyStatus status = StudyStatus.DRAFT;
-
+    private int limitCount;
     private int limit;
-
     private String name;
-
+    private LocalDateTime openedDateTime;
+    @ManyToOne
     private Member owner;
 
-    public Study() {
-    }
-
-    public Study(int limit) {
-
-        if (limit < 0) {
-            throw new IllegalArgumentException("limit은 0보다 커야 한다");
-        }
-        this.limit = limit;
-    }
-
     public Study(int limit, String name) {
-        this.limit = limit;
+        this.limitCount = limit;
         this.name = name;
     }
 
-    public StudyStatus getStatus() {
-        return status;
+    public Study(int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("limit은 0보다 커야 한다.");
+        }
+        this.limitCount = limit;
     }
 
-    public int getLimit() {
-        return limit;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return "Study{" +
-                "status=" + status +
-                ", limit=" + limit +
-                ", name='" + name + '\'' +
-                '}';
-    }
-
-    public void setOwner(Member member) {
-        this.owner = member;
-    }
-
-    public Member getOwner() {
-        return owner;
+    public void publish() {
+        this.openedDateTime = LocalDateTime.now();
+        this.status = StudyStatus.OPENED;
     }
 }

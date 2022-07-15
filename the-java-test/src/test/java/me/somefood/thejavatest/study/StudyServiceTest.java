@@ -5,6 +5,7 @@ import me.somefood.thejavatest.domain.Study;
 import me.somefood.thejavatest.member.MemberService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -12,8 +13,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class StudyServiceTest {
@@ -29,36 +29,21 @@ class StudyServiceTest {
         StudyService studyService = new StudyService(memberService, studyRepository);
         assertNotNull(studyService);
 
-//        Optional<Member> optional = memberService.findById(1L);
-//        assertEquals(Optional.empty(), optional);
-//
-//        memberService.validate(2L);
         Member member = new Member();
         member.setId(1L);
-        member.setEmail("hsj4665@gmail.com");
+        member.setEmail("keesun@email.com");
 
-        when(memberService.findById(any())).thenReturn(Optional.of(member)); // any(아무거나) 받아도 리턴
+        Study study = new Study(10, "테스트");
 
-        Optional<Member> findById = memberService.findById(1L);
-        assertEquals("hsj4665@gmail.com", findById.get().getEmail());
+        when(memberService.findById(1L)).thenReturn(Optional.of(member));
+        when(studyRepository.save(study)).thenReturn(study);
 
-        Study study = new Study(10, "java");
         studyService.createNewStudy(1L, study);
 
-        doThrow(new IllegalArgumentException()).when(memberService).validate(1L);
-        assertThrows(IllegalArgumentException.class, () -> memberService.validate(1L));
+        assertEquals(member, study.getOwner());
 
-        when(memberService.findById(any()))
-                .thenReturn(Optional.of(member))
-                .thenThrow(new RuntimeException())
-                .thenReturn(Optional.empty());
-
-        Optional<Member> byId = memberService.findById(1L);
-        assertEquals("hsj4665@gmail.com", byId.get().getEmail());
-
-        assertThrows(RuntimeException.class, () -> memberService.findById(2L));
-
-        assertEquals(Optional.empty(), memberService.findById(3L));
+        verify(memberService, times(1)).notify(study);
+        verifyNoMoreInteractions(memberService);
     }
 
     @Test
