@@ -1,10 +1,14 @@
 package me.somefood.thejavatest;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class StudyTest {
@@ -16,7 +20,10 @@ class StudyTest {
 
     @Test
     @DisplayName("스터디 만들기 😄")
+    @EnabledOnOs({OS.MAC, OS.LINUX})
     void create_new_study() {
+
+//        assumeTrue("LOCAL".equalsIgnoreCase(System.getenv("TEST_ENV")));
         Study study = new Study(20);
         assertAll(
                 () -> assertNotNull(study),
@@ -37,6 +44,7 @@ class StudyTest {
 
     @Test
     @DisplayName("스터디 만들기231231")
+    @DisabledOnOs({OS.MAC})
     void create_new_study1() {
         Study study = new Study();
         assertNotNull(study);
