@@ -19,8 +19,8 @@ class StudyTest {
      */
 
     @Test
-    @DisplayName("스터디 만들기 😄")
-    @EnabledOnOs({OS.MAC, OS.LINUX})
+    @DisplayName("스터디 만들기 fast")
+    @Tag("fast")
     void create_new_study() {
 
 //        assumeTrue("LOCAL".equalsIgnoreCase(System.getenv("TEST_ENV")));
@@ -43,8 +43,8 @@ class StudyTest {
     }
 
     @Test
-    @DisplayName("스터디 만들기231231")
-    @DisabledOnOs({OS.MAC})
+    @DisplayName("스터디 만들기 slow")
+    @Tag("slow")
     void create_new_study1() {
         Study study = new Study();
         assertNotNull(study);
