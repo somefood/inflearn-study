@@ -25,7 +25,7 @@ class StudyServiceTest {
     StudyRepository studyRepository;
 
     @Test
-    void createNewStudy(@Mock MemberService memberService, @Mock StudyRepository studyRepository) {
+    void createNewStudy() {
         StudyService studyService = new StudyService(memberService, studyRepository);
         assertNotNull(studyService);
 
@@ -61,4 +61,22 @@ class StudyServiceTest {
         assertEquals(Optional.empty(), memberService.findById(3L));
     }
 
+    @Test
+    void stubbingPrac() {
+        StudyService studyService = new StudyService(memberService, studyRepository);
+
+        Study study = new Study(10, "테스트");
+
+        Member member = new Member();
+        member.setId(1L);
+        member.setEmail("hsj4665@gmail.com");
+        when(memberService.findById(1L)).thenReturn(Optional.of(member));
+
+        when(studyRepository.save(study)).thenReturn(study);
+
+        studyService.createNewStudy(1L, study);
+
+        assertNotNull(study.getOwner());
+        assertEquals(member, study.getOwner());
+    }
 }

@@ -10,6 +10,8 @@ public class Study {
 
     private String name;
 
+    private Member owner;
+
     public Study() {
     }
 
@@ -48,6 +50,10 @@ public class Study {
     }
 
     public void setOwner(Member member) {
+        this.owner = member;
+    }
 
+    public Member getOwner() {
+        return owner;
     }
 }
