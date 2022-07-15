@@ -21,8 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // 클래스마다 인스턴스 생성, 하나로 공유
 class StudyTest {
 
+
+    int value = 1;
 
     /**
      * 테스트케이스 매서드명은 snake_case 사용해서 좀 읽기 쉽게 함
