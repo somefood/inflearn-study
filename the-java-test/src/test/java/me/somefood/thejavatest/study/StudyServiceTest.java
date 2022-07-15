@@ -3,6 +3,7 @@ package me.somefood.thejavatest.study;
 import me.somefood.thejavatest.domain.Member;
 import me.somefood.thejavatest.domain.Study;
 import me.somefood.thejavatest.member.MemberService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -70,5 +71,23 @@ class StudyServiceTest {
 
         assertNotNull(study.getOwner());
         assertEquals(member, study.getOwner());
+    }
+
+    @DisplayName("다른 사용자가 볼 수 있도록 스터디를 공개한다.")
+    @Test
+    void openStudy() {
+        // Given
+        StudyService studyService = new StudyService(memberService, studyRepository);
+        Study study = new Study(10, "더 자바, 테스트");
+
+        given(studyRepository.save(study)).willReturn(study);
+
+        // When
+        studyService.openStudy(study);
+
+        // Then
+        assertEquals(StudyStatus.OPENED, study.getStatus());
+        assertNotNull(study.getOpenedDateTime());
+        then(memberService).should(times(1)).notify(study);
     }
 }
