@@ -53,15 +53,4 @@ public class MemberServiceV3_2 {
             throw new IllegalStateException("이체중 예외 발생");
         }
     }
-
-    private void release(Connection con) {
-        if (con != null) {
-            try {
-                con.setAutoCommit(true); // 풀에 돌려줄 때 다시 오토 커밋으로 바꿔줘야 함
-                con.close(); // 풀에 반환
-            } catch (Exception e) {
-                log.info("error", e);
-            }
-        }
-    }
 }
