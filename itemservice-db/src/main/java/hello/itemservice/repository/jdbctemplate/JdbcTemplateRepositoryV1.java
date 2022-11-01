@@ -32,7 +32,7 @@ public class JdbcTemplateRepositoryV1 implements ItemRepository {
 
     @Override
     public Item save(Item item) {
-        String sql = "insert into item(item_name, price, quantity) values(?,?,?)";
+        String sql = "insert into item (item_name, price, quantity) values (?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
             // 자동 증가 키
@@ -62,7 +62,7 @@ public class JdbcTemplateRepositoryV1 implements ItemRepository {
 
     @Override
     public Optional<Item> findById(Long id) {
-        String sql = "select id, item_price, price, quantity from item where id=?";
+        String sql = "select id, item_name, price, quantity from item where id=?";
         try {
             Item item = template.queryForObject(sql, itemRowMapper(), id);
             return Optional.of(item);
@@ -76,10 +76,7 @@ public class JdbcTemplateRepositoryV1 implements ItemRepository {
     public List<Item> findAll(ItemSearchCond cond) {
         String itemName = cond.getItemName();
         Integer maxPrice = cond.getMaxPrice();
-
-        String sql = "select id, item_price, price, quantity from item where id=?";
-        // 동적 쿼리
-        //동적 쿼리
+        String sql = "select id, item_name, price, quantity from item"; //동적 쿼리
         if (StringUtils.hasText(itemName) || maxPrice != null) {
             sql += " where";
         }
@@ -107,7 +104,7 @@ public class JdbcTemplateRepositoryV1 implements ItemRepository {
             item.setId(rs.getLong("id"));
             item.setItemName(rs.getString("item_name"));
             item.setPrice(rs.getInt("price"));
-            item.setQuantity(rs.getInt("quantiy"));
+            item.setQuantity(rs.getInt("quantity"));
             return item;
         });
     }
