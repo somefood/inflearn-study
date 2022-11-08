@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,31 +31,17 @@ import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity // 웹 보안 활성화
-@Order(0)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+                .anyRequest().authenticated();
         http
-                .antMatcher("/admin/**")
-                .authorizeRequests()
-                .anyRequest().authenticated()
-        .and()
-                .httpBasic();
-    }
-}
-
-@Configuration
-@Order(1)
-//@EnableWebSecurity // 웹 보안 활성화, 한 곳만 달아주면 됨
-class SecurityConfig2 extends WebSecurityConfigurerAdapter {
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeRequests()
-                .anyRequest().permitAll()
-                .and()
                 .formLogin();
+        http
+                .sessionManagement()
+                .sessionFixation().changeSessionId()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }
