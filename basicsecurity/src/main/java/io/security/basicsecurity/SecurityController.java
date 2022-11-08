@@ -33,7 +33,7 @@ public class SecurityController {
         return "loginPage";
     }
 
-    @GetMapping
+    @GetMapping("/denied")
     public String denied() {
         return "Access is denied";
     }
