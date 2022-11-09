@@ -31,28 +31,30 @@ import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity // 웹 보안 활성화
+@Order(0)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("user").password("{noop}1111").roles("USER");
-        auth.inMemoryAuthentication().withUser("sys").password("{noop}1111").roles("SYS", "USER");
-        auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN", "SYS", "USER");
-
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .antMatcher("/admin/**")
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and().httpBasic();
     }
+}
+
+
+@Order(1)
+@Configuration
+class SecurityConfig2 extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-
         http
                 .authorizeRequests()
-                .anyRequest().permitAll();
-
-        http
+                .anyRequest().permitAll()
+                .and()
                 .formLogin();
-
-        http
-                .csrf();
-//                .disable();
     }
 }
