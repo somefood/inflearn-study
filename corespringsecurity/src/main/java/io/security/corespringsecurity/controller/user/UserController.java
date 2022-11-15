@@ -2,7 +2,6 @@ package io.security.corespringsecurity.controller.user;
 
 import io.security.corespringsecurity.domain.entity.Account;
 import io.security.corespringsecurity.domain.dto.AccountDto;
-import io.security.corespringsecurity.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping(value = "/mypage")
@@ -34,7 +32,7 @@ public class UserController {
         ModelMapper modelMapper = new ModelMapper();
         Account account = modelMapper.map(accountDto, Account.class);
         account.setPassword(passwordEncoder.encode(account.getPassword()));
-        userService.createUser(account);
+//        userService.createUser(account);
 
         return "redirect:/";
     }
