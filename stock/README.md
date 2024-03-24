@@ -93,3 +93,24 @@ public class TransactionStockService {
   - 별도의 명령어로 해제를 수행해주거나 선점시간이 끝나야 해제됩니다.
   - Pessimistic Lock은 로우나 테이블 단위로 락을 걸지만, Named Lock은 메타데이터에 락을 걺
 
+## Pessimistic Lock 활용해보기
+
+- @Lock 어노테이션을 활용해서 Pessimistic 락을 쉽게 걸 수 있다.
+
+```java
+public interface StockRepository extends JpaRepository<Stock, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Stock s where s.id = :id")
+    Stock findByIdWithPessimisticLock(Long id);
+}
+```
+
+- 해당 메서드를 활용하면 for update 문구가 붙는데, 이게 락을 거는 것임
+- 해당 락의 장점은 충돌이 빈번하게 일어난다면 Optimistic 락보다 성능이 좋을 수 있음
+- 또한, 락을 통해 업데이트를 제어하기 때문에 데이터 정합성이 보장됨
+- 하지만 별도의 락을 잡는 것이기에 성능 감소가 일어날 수 있음
+
+```sql
+select s1_0.id,s1_0.product_id,s1_0.quantity from stock s1_0 where s1_0.id=? for update
+```
