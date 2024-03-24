@@ -187,3 +187,58 @@ update stock set product_id=?,quantity=?,version=? where id=? and version=? -- u
 - Optimistic 락은 별도의 락을 잡지 않으므로 Pessimistic 락보다 성능상 이점이 있음
 - 단점으론 업데이트가 실패했을 때 재시도 로직을 개발자가 직접 작성해 주어야 함
 - 충돌이 빈번하게 일어날거 같으면 Pessimistic 락을 추천하며, 그렇지 않을 때 Optimistic 락을 사용해보도록 해보자
+
+## Named Lock
+
+- 이름을 가진 메타데이터 락
+- 이름을 가진 락을 획득한 후 해제할 때까지 다른 세션은 이 락을 획들할 수 없게 됨
+- 트랜잭션이 종료될 때 락이 자동으로 해제되지 않기 때문에 별도의 명령어로 해제를 수행해주거나 선점 시간이 끝나야 락이 해제되니 주의해야 함
+  - MySQL: get-lock 명령어로 락 획득 가능/release-lock으로 락 해제 가능 
+- 같은 데이터 소스를 사용하면 커넥션 풀이 부족해져 다른 서비스에도 영향을 줄 수 있기에 데이터 소스를 분리해서 사용해주는 것을 추천
+
+```java
+// 예제라 그렇지만, 별도의 JDBC를 사용해서 만들어주길 바람
+public interface LockRepository extends JpaRepository<Stock, Long> {
+
+    @Query(value = "select get_lock(:key, 3000)", nativeQuery = true)
+    void getLock(String key);
+
+    @Query(value = "select release_lock(:key)", nativeQuery = true)
+    void releaseLock(String key);
+}
+```
+
+- 락을 잡고 해제해줘야해서 Facade 디자인패턴 사용
+
+```java
+@Component
+public class NamedLockStockFacade {
+
+    private final LockRepository lockRepository;
+
+    private final StockService stockService;
+
+    public NamedLockStockFacade(LockRepository lockRepository, StockService stockService) {
+        this.lockRepository = lockRepository;
+        this.stockService = stockService;
+    }
+
+    public void decrease(Long id, Long quantity) {
+        try {
+            lockRepository.getLock(id.toString());
+            stockService.decrease(id, quantity);
+        } finally {
+            lockRepository.releaseLock(id.toString());
+        }
+    }
+}
+```
+
+```sql
+select get_lock(?, 3000)
+```
+
+- 네임드락은 분산락을 구현할 때 사용
+- Pessimistic Lock 은 타임아웃을 구현하기 어렵지만 네임드락은 구현하기 쉬움 
+- 데이터 삽입 시에 정합성을 맞춰야 하는 경우에도 네임드락을 사용하면 좋음
+- 하지만, 트랜잭션 종료 시에 락 해제, 세션 관리를 잘 해줘야 하기 때문에 구현 방법이 복잡해짐
