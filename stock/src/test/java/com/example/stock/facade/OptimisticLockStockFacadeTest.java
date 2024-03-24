@@ -1,4 +1,4 @@
-package com.example.stock.service;
+package com.example.stock.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,10 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class StockServiceTest {
-
+class OptimisticLockStockFacadeTest {
     @Autowired
-    private PessimisticLockStockService stockService;
+    private OptimisticLockStockFacade optimisticLockStockFacade;
 
     @Autowired
     private StockRepository stockRepository;
@@ -33,16 +32,6 @@ class StockServiceTest {
     }
 
     @Test
-    void 재고감소() {
-        stockService.decrease(1L, 1L);
-
-        // 100 - 1 = 99
-        final Stock stock = stockRepository.findById(1L).orElseThrow();
-
-        assertThat(stock.getQuantity()).isEqualTo(99L);
-    }
-
-    @Test
     void 동시에_100개의_요청() throws InterruptedException {
         int threadCount = 100;
         final ExecutorService executorService = Executors.newFixedThreadPool(32); // 비동기로 실행하는 작업을 단순화하여 사용할 수 있게 해줌. 쓰레드풀 만들어줌
@@ -51,7 +40,9 @@ class StockServiceTest {
         for (int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
                 try {
-                    stockService.decrease(1L, 1L);
+                    optimisticLockStockFacade.decrease(1L, 1L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     latch.countDown();
                 }

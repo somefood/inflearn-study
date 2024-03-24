@@ -114,3 +114,76 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 ```sql
 select s1_0.id,s1_0.product_id,s1_0.quantity from stock s1_0 where s1_0.id=? for update
 ```
+
+## Optimistic Lock
+
+- 실제로 락을 이용하지 않고 버전을 이용하여 버전을 맞추는 방법
+- 내가 읽은 버전에서 수정사항이 생겼을 경우 애플리케이션에서 다시 읽은 후에 작업을 수행해야 함
+
+```java
+@Service
+public class OptimisticLockStockService {
+
+    private final StockRepository stockRepository;
+
+    public OptimisticLockStockService(StockRepository stockRepository) {
+        this.stockRepository = stockRepository;
+    }
+
+    @Transactional
+    public void decrease(Long id, Long quantity) {
+        final Stock stock = stockRepository.findByIdWithOptimisticLock(id);
+
+        stock.decrease(quantity);
+        stockRepository.save(stock);
+    }
+}
+```
+
+- Optimistic Lock 지정
+
+```java
+public interface StockRepository extends JpaRepository<Stock, Long> {
+    
+    @Lock(LockModeType.OPTIMISTIC)
+    @Query("select s from Stock s where s.id = :id")
+    Stock findByIdWithOptimisticLock(Long id);
+}
+```
+
+- Facade 패턴을 활용해서 내 버전이 맞지 않으면 무한 반복문을 통해 버전을 맞출 수 있도록 해줌
+- 에러가 발생하면 아래와 같이 나옴
+  > org.springframework.orm.ObjectOptimisticLockingFailureException: Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect) : [com.example.stock.domain.Stock#1]
+
+```java
+@Component
+public class OptimisticLockStockFacade {
+
+    private final OptimisticLockStockService optimisticLockStockService;
+
+    public OptimisticLockStockFacade(OptimisticLockStockService optimisticLockStockService) {
+        this.optimisticLockStockService = optimisticLockStockService;
+    }
+
+    public void decrease(Long id, Long quantity) throws InterruptedException {
+        while (true) {
+            try {
+                optimisticLockStockService.decrease(id, quantity);
+                break;
+            } catch (Exception e) {
+                Thread.sleep(50);
+            }
+        }
+    }
+}
+```
+
+```sql
+insert into stock (product_id,quantity,version) values (?,?,?); -- 버전도 insert 함
+
+update stock set product_id=?,quantity=?,version=? where id=? and version=? -- update 시 버전도 같이 넣어줌. 해당 버전이 없으면 에러가 날테니 while 반복문을 통해 맞춰줌
+```
+
+- Optimistic 락은 별도의 락을 잡지 않으므로 Pessimistic 락보다 성능상 이점이 있음
+- 단점으론 업데이트가 실패했을 때 재시도 로직을 개발자가 직접 작성해 주어야 함
+- 충돌이 빈번하게 일어날거 같으면 Pessimistic 락을 추천하며, 그렇지 않을 때 Optimistic 락을 사용해보도록 해보자
