@@ -278,3 +278,48 @@ public class LettuceLockStockFacade {
 ```
 
 - Thread.sleep(100): 시간을 설정하여어 레디스에 부하되지 않게 조정해주는게 좋다. 
+
+## Redisson을 활용하여 재고로직 작성하기
+
+- subscribe ch1: ch1을 구독하기
+- publish ch1 hello: ch1에 메시지 보내기
+- 레디스는 자신이 점유하고 있는 락을 해제할 때 채널에 메시지를 보내줌으로써 락을 획득해야 하는 쓰레드에게 알려줄 수 있다
+- Lettuce는 계속 락 획득을 시도하는 반면, 레디스는 락 해제가 되었을 때 한 번 혹은 몇 번만 시도하기 때문에 레디스의 부하를 줄여줄 수 있다.
+- 레디슨 라이브러리를 사용하면 Pub/Sub 기반이라 레디스의 부하를 줄여줄 수 있₩
+
+- 의존성 추가하기
+> implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
+
+```java
+@Component
+public class RedissonLockStockFacade {
+
+  private final RedissonClient redissonClient;
+
+  private final StockService stockService;
+
+  public RedissonLockStockFacade(RedissonClient redissonClient, StockService stockService) {
+    this.redissonClient = redissonClient;
+    this.stockService = stockService;
+  }
+
+  public void decrease(Long id, Long quantity) {
+    final RLock lock = redissonClient.getLock(id.toString());
+
+    try {
+      final boolean available = lock.tryLock(10, 1, TimeUnit.SECONDS);
+
+      if (!available) {
+        System.out.println("lock 획득 실패");
+        return;
+      }
+
+      stockService.decrease(id, quantity);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } finally {
+      lock.unlock();
+    }
+  }
+}
+```
