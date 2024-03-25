@@ -242,3 +242,39 @@ select get_lock(?, 3000)
 - Pessimistic Lock 은 타임아웃을 구현하기 어렵지만 네임드락은 구현하기 쉬움 
 - 데이터 삽입 시에 정합성을 맞춰야 하는 경우에도 네임드락을 사용하면 좋음
 - 하지만, 트랜잭션 종료 시에 락 해제, 세션 관리를 잘 해줘야 하기 때문에 구현 방법이 복잡해짐
+
+# 섹션 4 Redis 이용해보기
+
+## Lettuce를 작성하여 재고감소 로직 작성하기
+
+- 레디스에서 간단하게 락을 갖고오는 방법 (setnx)
+  - `setnx key value`: intger 1 반환. 다른데서 같은 키를 얻고자 하면 0을 반환한다.
+  - `del key`: 락을 다시 반환한다.
+
+```java
+@Component
+public class LettuceLockStockFacade {
+
+    private final RedisLockRepository redisLockRepository;
+    private final StockService stockService;
+
+    public LettuceLockStockFacade(RedisLockRepository redisLockRepository, StockService stockService) {
+        this.redisLockRepository = redisLockRepository;
+        this.stockService = stockService;
+    }
+
+    public void decrease(Long id, Long quantity) throws InterruptedException {
+        while (!redisLockRepository.lock(id)) {
+            Thread.sleep(100);
+        }
+
+        try {
+            stockService.decrease(id, quantity);
+        } finally {
+            redisLockRepository.unlock(id);
+        }
+    }
+}
+```
+
+- Thread.sleep(100): 시간을 설정하여어 레디스에 부하되지 않게 조정해주는게 좋다. 
