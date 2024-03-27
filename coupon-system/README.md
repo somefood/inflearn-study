@@ -123,3 +123,94 @@ docker exec -it kafka kafka-console-consumer.sh --topic testTopic --bootstrap-se
 ```
 
 - 이후 프로듀서에서 메시지를 입력하면 컨슈머가 내용을 받을 수 있음
+
+## Producer 사용하기
+
+- Kafka Config 만들어주기
+
+```java
+@Configuration
+public class KafkaProducerConfig {
+
+    @Bean
+    public ProducerFactory<String, Long> producerFactory() {
+        Map<String, Object> config = new HashMap<>();
+
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    /**
+     * 카프카 토픽에 데이터를 전송하기 위해 사용할 템플릿
+     */
+    @Bean
+    public KafkaTemplate<String, Long> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+}
+```
+
+- Producer 클래스 만들어주기
+
+```java
+@Component
+public class CouponCreateProducer {
+
+    private final KafkaTemplate<String, Long> kafkaTemplate;
+
+    public CouponCreateProducer(KafkaTemplate<String, Long> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void create(Long userId) {
+        kafkaTemplate.send("coupon_create", userId);
+    }
+}
+```
+
+- ApplyService 수정
+
+```java
+@Service
+public class ApplyService {
+
+    public final CouponRepository couponRepository;
+
+    private final CouponCountRepository couponCountRepository;
+
+    private final CouponCreateProducer couponCreateProducer;
+
+    public ApplyService(CouponRepository couponRepository, CouponCountRepository couponCountRepository,
+                        CouponCreateProducer couponCreateProducer) {
+        this.couponRepository = couponRepository;
+        this.couponCountRepository = couponCountRepository;
+        this.couponCreateProducer = couponCreateProducer;
+    }
+
+    public void apply(Long userId) {
+        final long count = couponCountRepository.increment(); // redis flushall 한 번 해주자. incr 올라가있어서 작동 안되고 있었음 ㅎㅎ..
+
+        if (count > 100) {
+            return;
+        }
+        couponCreateProducer.create(userId);
+    }
+}
+```
+
+### Topic 생성
+
+```shell
+docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic coupon_create
+```
+
+### Consumer 실행
+
+```shell
+docker exec -it kafka kafka-console-consumer.sh --topic coupon_create --bootstrap-server localhost:9092 --key-deserializer "org.apache.kafka.common.serialization.StringDeserializer" --value-deserializer "org.apache.kafka.common.serialization.LongDeserializer"
+```
+
+> redis flushall 한 번 해주자. incr 올라가있어서 작동 안되고 있었음 ㅎㅎ..
