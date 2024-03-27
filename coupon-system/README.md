@@ -52,3 +52,74 @@ implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 127.0.0.1:6379> incr coupon_count
 (integer) 21
 ```
+
+## 문제점
+
+- mysql에서 1분에 100개의 insert가 가능하다고 가정하고 아래 표를 보자
+
+|Time| Request         |
+|----|-----------------|
+|10:00| 쿠폰생성 10,000개 요청 |
+|10:01| 주문생성 요청         |
+|10:02| 회원가입 요청         |
+
+- 10:00에 쿠폰을 생성하려면 100분의 시간이 걸림
+- 그러면 이후 주문생성, 회원가입은 100분 뒤에 요청이 완료됨
+- 타임아웃이 없으면 느리게라도 되지만 대부분의 애플리케이션은 타임아웃이 있기에 요청들이 실패하게 됨
+- 또한, 짧은 시간 내에 많은 요청이 들어오게 되면, DB 서버의 리소스를 많이 사용하게 되어 부하가 발생하고 서비스 지연 및 오류로 이어지게 됨
+
+> Kafka를 이용해서 문제를 해결해보자
+
+# 섹션 3 Kafka를 활용하여 문제 해결하기
+
+```yaml
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:2.12-2.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+> docker-compose up -d 실행
+
+## kafka 알아보기
+
+- 분산 이벤트 스트리밍 플랫폼
+- 이벤트 스트리밍이란 소스에서 목적지까지 이벤트를 실시간으로 스트리밍 하는 것
+- 간단한 구조
+  - producer -> Topic <- consumer
+  - Topic: Queue 같은 역할
+  - producer: 토픽에 데이터를 삽입할 수 있는 기능을 가짐
+  - consumer: 토픽에 삽입된 데이터를 가져올 수 있음
+
+### 토픽 생성
+
+```shell
+docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic testTopic
+```
+
+### 프로듀스 실행
+
+```shell
+docker exec -it kafka kafka-console-producer.sh --topic testTopic --broker-list 0.0.0.0:9092
+```
+
+### 컨슈머 실행
+
+```shell
+docker exec -it kafka kafka-console-consumer.sh --topic testTopic --bootstrap-server localhost:9092
+```
+
+- 이후 프로듀서에서 메시지를 입력하면 컨슈머가 내용을 받을 수 있음
