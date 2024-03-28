@@ -214,3 +214,84 @@ docker exec -it kafka kafka-console-consumer.sh --topic coupon_create --bootstra
 ```
 
 > redis flushall 한 번 해주자. incr 올라가있어서 작동 안되고 있었음 ㅎㅎ..
+
+## Consumer 사용하기
+
+- 컨슈머 설정 팩토리와 리스너를 지정한다.
+
+```java
+@Configuration
+public class KafkaConsumerConfig {
+
+    @Bean
+    public ConsumerFactory<String, Long> consumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(config);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Long> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Long> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+
+        return factory;
+    }
+}
+```
+
+- @KafkaListner를 활용해서 토픽과 그룹을 지정해준다.
+- 지정한 토픽에서 메시지가 오면 그때 쿠폰을 발행하게 된다.
+
+```java
+@Component
+public class CouponCreatedConsumer {
+
+    private final CouponRepository couponRepository;
+
+    public CouponCreatedConsumer(CouponRepository couponRepository) {
+        this.couponRepository = couponRepository;
+    }
+
+    @KafkaListener(topics = "coupon_create", groupId = "group_1")
+    public void listener(Long userId) {
+        couponRepository.save(new Coupon(userId));
+    }
+}
+```
+
+- 카프카로 메시징을 하면 count 하는 시점엔 저장이 완료되지 않을 수 있기에 충분한 텀을 두고 테스트를 확인해야한다.
+
+```java
+@Test
+void 여러명응모() throws InterruptedException {
+    int threadCount = 1000;
+    final ExecutorService executorService = Executors.newFixedThreadPool(32);
+    final CountDownLatch latch = new CountDownLatch(threadCount);
+
+    for (int i = 0; i < threadCount; i++) {
+        long userId = i;
+        executorService.submit(() -> {
+            try {
+                applyService.apply(userId);
+            } finally {
+                latch.countDown();
+            }
+        });
+    }
+
+    latch.await();
+
+    Thread.sleep(10000);
+
+    final long count = couponRepository.count();
+
+    assertThat(count).isEqualTo(100);
+
+}
+```
