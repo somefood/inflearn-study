@@ -295,3 +295,164 @@ void 여러명응모() throws InterruptedException {
 
 }
 ```
+
+# 섹셔 4 요구사항 변경
+
+## 발급가능한 쿠폰개수를 1인당 1개로 제한하기
+
+- 인당 1개만 받게 하려면 어떻게 해야할까
+- set 자료구조를 활용해서 중복을 제거하면 가능하다!
+- redis `sadd key value`를 사용하면 된다.
+  - sadd applied 1: 1번 유저에 대해 set에 추가
+  - 아래와 같이 추가되면 1 중복이면 0을 출력한다.
+
+```shell
+127.0.0.1:6379> sadd applied 1
+(integer) 1
+127.0.0.1:6379> sadd applied 1
+(integer) 0
+127.0.0.1:6379>
+
+```
+
+- 자바 코드로 추가
+
+```java
+@Repository
+public class AppliedUserRepository {
+
+    private final RedisTemplate<String, String> redisTemplate;
+
+    public AppliedUserRepository(RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
+    public Long add(Long userId) {
+        return redisTemplate
+                .opsForSet()
+                .add("applied_user", userId.toString());
+    }
+}
+```
+
+- if (apply != 1): 위에서 언급했듯이 1이 아니면 이미 추가 된 경우니 쿠폰 발급을 하지 않으면 된다.
+
+```java
+@Service
+public class ApplyService {
+
+    public final CouponRepository couponRepository;
+
+    private final CouponCountRepository couponCountRepository;
+
+    private final CouponCreateProducer couponCreateProducer;
+
+    private final AppliedUserRepository appliedUserRepository;
+
+    public ApplyService(CouponRepository couponRepository, CouponCountRepository couponCountRepository, CouponCreateProducer couponCreateProducer, AppliedUserRepository appliedUserRepository) {
+        this.couponRepository = couponRepository;
+        this.couponCountRepository = couponCountRepository;
+        this.couponCreateProducer = couponCreateProducer;
+        this.appliedUserRepository = appliedUserRepository;
+    }
+
+    public void apply(Long userId) {
+        Long apply = appliedUserRepository.add(userId);
+
+        if (apply != 1) {
+            return; // 이미 발급 받음
+        }
+
+        final long count = couponCountRepository.increment();
+
+        if (count > 100) {
+            return;
+        }
+
+        couponCreateProducer.create(userId);
+    }
+}
+```
+
+- 테스트 코드 작성
+
+```java
+@Test
+void 한명당_한개의쿠폰만_발급() throws InterruptedException {
+    int threadCount = 1000;
+    final ExecutorService executorService = Executors.newFixedThreadPool(32);
+    final CountDownLatch latch = new CountDownLatch(threadCount);
+
+    for (int i = 0; i < threadCount; i++) {
+        long userId = i;
+        executorService.submit(() -> {
+            try {
+                applyService.apply(1L);
+            } finally {
+                latch.countDown();
+            }
+        });
+    }
+
+    latch.await();
+
+    Thread.sleep(10000);
+
+    final long count = couponRepository.count();
+
+    assertThat(count).isEqualTo(1);
+
+}
+```
+
+# 섹션 5 시스템 개선하기
+
+- 카프카를 통해 이벤트 방식으로 바꾸어 봤다.
+- 하지만 저장에는 실패했는데, 레디스에서는 이미 값이 증가하여 못 받는 경우가 생길 수 있다.
+- 이런 경우 실패 이력을 쌓아둬서 배치를 통해 쿠폰을 지급할 수 있다.
+
+```java
+@Entity
+public class FailedEvent {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long userId;
+
+    public FailedEvent() {
+    }
+
+    public FailedEvent(Long userId) {
+        this.userId = userId;
+    }
+}
+```
+
+```java
+@Component
+public class CouponCreatedConsumer {
+
+    private final CouponRepository couponRepository;
+
+    private final FailedEventRepository failedEventRepository;
+
+    private final Logger logger = LoggerFactory.getLogger(CouponCreatedConsumer.class);
+
+    public CouponCreatedConsumer(CouponRepository couponRepository, FailedEventRepository failedEventRepository) {
+        this.couponRepository = couponRepository;
+        this.failedEventRepository = failedEventRepository;
+    }
+
+    @KafkaListener(topics = "coupon_create", groupId = "group_1")
+    public void listener(Long userId) {
+        try {
+            couponRepository.save(new Coupon(userId));
+        } catch (Exception e) {
+            logger.error("failed to create coupon::" + userId);
+            failedEventRepository.save(new FailedEvent(userId));
+        }
+    }
+}
+```
