@@ -245,12 +245,111 @@ select get_lock(?, 3000)
 
 # 섹션 4 Redis 이용해보기
 
-## Redis 라이브러리 알아보기
+## Lettuce를 작성하여 재고감소 로직 작성하기
+
+- 레디스에서 간단하게 락을 갖고오는 방법 (setnx)
+  - `setnx key value`: intger 1 반환. 다른데서 같은 키를 얻고자 하면 0을 반환한다.
+  - `del key`: 락을 다시 반환한다.
+
+```java
+@Component
+public class LettuceLockStockFacade {
+
+    private final RedisLockRepository redisLockRepository;
+    private final StockService stockService;
+
+    public LettuceLockStockFacade(RedisLockRepository redisLockRepository, StockService stockService) {
+        this.redisLockRepository = redisLockRepository;
+        this.stockService = stockService;
+    }
+
+    public void decrease(Long id, Long quantity) throws InterruptedException {
+        while (!redisLockRepository.lock(id)) {
+            Thread.sleep(100);
+        }
+
+        try {
+            stockService.decrease(id, quantity);
+        } finally {
+            redisLockRepository.unlock(id);
+        }
+    }
+}
+```
+
+- Thread.sleep(100): 시간을 설정하여어 레디스에 부하되지 않게 조정해주는게 좋다. 
+
+## Redisson을 활용하여 재고로직 작성하기
+
+- subscribe ch1: ch1을 구독하기
+- publish ch1 hello: ch1에 메시지 보내기
+- 레디스는 자신이 점유하고 있는 락을 해제할 때 채널에 메시지를 보내줌으로써 락을 획득해야 하는 쓰레드에게 알려줄 수 있다
+- Lettuce는 계속 락 획득을 시도하는 반면, 레디스는 락 해제가 되었을 때 한 번 혹은 몇 번만 시도하기 때문에 레디스의 부하를 줄여줄 수 있다.
+- 레디슨 라이브러리를 사용하면 Pub/Sub 기반이라 레디스의 부하를 줄여줄 수 있₩
+
+- 의존성 추가하기
+> implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
+
+```java
+@Component
+public class RedissonLockStockFacade {
+
+  private final RedissonClient redissonClient;
+
+  private final StockService stockService;
+
+  public RedissonLockStockFacade(RedissonClient redissonClient, StockService stockService) {
+    this.redissonClient = redissonClient;
+    this.stockService = stockService;
+  }
+
+  public void decrease(Long id, Long quantity) {
+    final RLock lock = redissonClient.getLock(id.toString());
+
+    try {
+      final boolean available = lock.tryLock(10, 1, TimeUnit.SECONDS);
+
+      if (!available) {
+        System.out.println("lock 획득 실패");
+        return;
+      }
+
+      stockService.decrease(id, quantity);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } finally {
+      lock.unlock();
+    }
+  }
+}
+```
+
+## 라이브러리 장단점
 
 - Lettuce
-  - setnx 명령어를 활용하여 분사락 구현
-  - spin lock 방식(일정 시간 기다리면서 락을 획득할 수 있도록)
+  - 구현이 간단하다
+  - spring data redis 를 이용하면 lettuce 가 기본이기때문에 별도의 라이브러리를 사용하지 않아도 된다.
+  - spin lock 방식이기때문에 동시에 많은 스레드가 lock 획득 대기 상태라면 redis 에 부하가 갈 수 있다.
+
 - Redisson
-  - pub-sub 기반으로 Lock 구현 제공
-    - 채널을 하나 만들고 락을 점유 중인 쓰레드가 락 획득하려고 대기 중인 쓰레드에게 해제를 알려주면, 안내 받은 스레드가 락 획득 시도를 하는 방식
-    - 별도의 리트라이 로직을 작성하지 않아도 됨
+  - 락 획득 재시도를 기본으로 제공한다.
+  - pub-sub 방식으로 구현이 되어있기 때문에 lettuce 와 비교했을 때 redis 에 부하가 덜 간다.
+  - 별도의 라이브러리를 사용해야한다.
+  - lock 을 라이브러리 차원에서 제공해주기 떄문에 사용법을 공부해야 한다.
+
+- 실무에서는
+  - 재시도가 필요하지 않은 lock 은 lettuce 활용
+  - 재시도가 필요한 경우에는 redisson 를 활용
+
+# 섹션 5 마무리
+
+## Mysql과 Redis 비교하기
+
+- Mysql
+  - 이미 Mysql 을 사용하고 있다면 별도의 비용없이 사용가능하다.
+  - 어느정도의 트래픽까지는 문제없이 활용이 가능하다.
+  - Redis 보다는 성능이 좋지않다.
+
+- Redis
+  - 활용중인 Redis 가 없다면 별도의 구축비용과 인프라 관리비용이 발생한다.
+  - Mysql 보다 성능이 좋다.
