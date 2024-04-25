@@ -66,4 +66,29 @@ public class QUerydslBasicTest {
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
+
+    @Test
+    void search() {
+        final Member findMember = queryFactory
+            .selectFrom(member)
+            .where(member.username.eq("member1")
+                       .and(member.age.eq(10)))
+            .fetchOne();
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    // where 메서드 안에 연속해서 넣으면 and로 인식됨
+    @Test
+    void searchAndParam() {
+        final Member findMember = queryFactory
+            .selectFrom(member)
+            .where(
+                member.username.eq("member1"),
+                member.age.between(10, 30)
+            )
+            .fetchOne();
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
 }
