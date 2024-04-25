@@ -18,6 +18,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
 import java.util.List;
 import me.somefood.querydsl.dto.MemberDto;
+import me.somefood.querydsl.dto.QMemberDto;
 import me.somefood.querydsl.dto.UserDto;
 import me.somefood.querydsl.entity.Member;
 import me.somefood.querydsl.entity.QMember;
@@ -30,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
-public class QUerydslBasicTest {
+public class QuerydslBasicTest {
 
     @Autowired
     EntityManager em;
@@ -582,6 +583,18 @@ public class QUerydslBasicTest {
             .fetch();
 
         for (UserDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    void findDtoByQueryProjection() {
+        final List<MemberDto> result = queryFactory
+            .select(new QMemberDto(member.username, member.age))
+            .from(member)
+            .fetch();
+
+        for (MemberDto memberDto : result) {
             System.out.println("memberDto = " + memberDto);
         }
     }
