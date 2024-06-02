@@ -5,7 +5,9 @@ import java.util.Scanner;
 public class MainV1 {
 
     public static void main(String[] args) {
-        final NetworkServiceV1_1 networkService = new NetworkServiceV1_1();
+//        final NetworkServiceV1_1 networkService = new NetworkServiceV1_1();
+//        final NetworkServiceV1_2 networkService = new NetworkServiceV1_2();
+        final NetworkServiceV1_3 networkService = new NetworkServiceV1_3();
 
         final Scanner scanner = new Scanner(System.in);
         while (true) {
