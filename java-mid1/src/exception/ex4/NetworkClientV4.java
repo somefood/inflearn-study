@@ -1,30 +1,30 @@
-package exception.ex3;
+package exception.ex4;
 
-import exception.ex3.exception.ConnectExceptionV3;
-import exception.ex3.exception.SendExceptionV3;
+import exception.ex4.exception.ConnectExceptionV4;
+import exception.ex4.exception.SendExceptionV4;
 
-public class NetworkClientV3 {
+public class NetworkClientV4 {
 
     private final String address;
     public boolean connectError; // default false
     public boolean sendError;
 
-    public NetworkClientV3(String address) {
+    public NetworkClientV4(String address) {
         this.address = address;
     }
 
-    public void connect() throws ConnectExceptionV3 {
+    public void connect() {
         if (connectError) {
-            throw new ConnectExceptionV3(address, address + " 서버 연결 실패");
+            throw new ConnectExceptionV4(address, address + " 서버 연결 실패");
         }
 
         // 연결 성공
         System.out.println(address + " 서버 연결 성공");
     }
 
-    public void send(String data) throws SendExceptionV3 {
+    public void send(String data) {
         if (sendError) {
-            throw new SendExceptionV3(data, address + " 서버에 데이터 전송 실패: " + data);
+            throw new SendExceptionV4(data, address + " 서버에 데이터 전송 실패: " + data);
 
             // 생각치 못한 예외 발생
             // throw new RuntimeException();
