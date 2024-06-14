@@ -38,6 +38,8 @@ public class Game {
     
     private List<Player> receiveCardAllPlayers(Scanner sc, CardDeck cardDeck, List<Player> players) {
         for (Player player : players) {
+            System.out.println(player.getName() + "님 차례입니다.");
+            
             if(isReceiveCard(sc)) {
                 Card card = cardDeck.draw();
                 player.receiveCard(card);

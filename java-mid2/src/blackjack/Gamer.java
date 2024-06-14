@@ -53,6 +53,11 @@ public class Gamer implements Player {
         return this.turn;
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
     private void setTurn(boolean turn) {
         this.turn = turn;
     }
