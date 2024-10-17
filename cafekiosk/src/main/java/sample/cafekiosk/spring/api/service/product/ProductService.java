@@ -1,15 +1,16 @@
 package sample.cafekiosk.spring.api.service.product;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sample.cafekiosk.spring.api.controller.product.dto.request.ProductCreateRequest;
+import sample.cafekiosk.spring.api.service.product.request.ProductCreateServiceRequest;
 import sample.cafekiosk.spring.api.service.product.response.ProductResponse;
 import sample.cafekiosk.spring.domain.product.Product;
 import sample.cafekiosk.spring.domain.product.ProductRepository;
 import sample.cafekiosk.spring.domain.product.ProductSellingStatus;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * readOnly = true: 읽기전용 트랜잭션 동작
@@ -28,7 +29,7 @@ public class ProductService {
     // 동시성 이슈 발생할 여지가 다분
     // UUID 활용
     @Transactional
-    public ProductResponse createProduct(ProductCreateRequest request) {
+    public ProductResponse createProduct(ProductCreateServiceRequest request) {
         final String nextProductNumber = createNextProductNumber();
 
         Product product = request.toEntity(nextProductNumber);
