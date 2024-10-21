@@ -25,12 +25,13 @@ import java.util.stream.Collectors;
 public class ProductService {
     
     private final ProductRepository productRepository;
+    private final ProductNumberFactory productNumberFactory;
 
     // 동시성 이슈 발생할 여지가 다분
     // UUID 활용
     @Transactional
     public ProductResponse createProduct(ProductCreateServiceRequest request) {
-        final String nextProductNumber = createNextProductNumber();
+        final String nextProductNumber = productNumberFactory.createNextProductNumber();
 
         Product product = request.toEntity(nextProductNumber);
         final Product savedProduct = productRepository.save(product);
@@ -45,17 +46,5 @@ public class ProductService {
                 .map(ProductResponse::of)
                 .collect(Collectors.toList());
 
-    }
-
-    private String createNextProductNumber() {
-        String latestProductNumber = productRepository.findLatestProductNumber();
-        if (latestProductNumber == null) {
-            return "001";
-        }
-
-        int latestProductNumberInt = Integer.parseInt(latestProductNumber);
-        int nextProductNumberInt = latestProductNumberInt + 1;
-
-        return String.format("%03d", nextProductNumberInt);
     }
 }
